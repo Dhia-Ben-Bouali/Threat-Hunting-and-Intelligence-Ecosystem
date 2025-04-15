@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wazuh Alerts Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/stylesTraffic.css') }}">
+</head>
+<body>
+  <div class="container">
+    <div class="navbar">
+      <a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">
+          <span>🔍 Pulse Shield</span>
+      </a>
+      <span id="clock"></span>
+  </div>  
+    <div class="content">
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <span>Alerts</span>
+          <svg onclick="location.reload()" style="cursor: pointer;" xmlns="http://www.w3.org/2000/svg"
+               width="16" height="16" fill="currentColor"
+               class="bi bi-arrow-repeat" viewBox="0 0 16 16">
+            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9"/>
+            <path fill-rule="evenodd"
+                  d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/>
+          </svg>
+        </div>
+        <div class="alert-list">
+          <ul>
+            {% for protocol_type, service, flag, src_bytes, dst_bytes,duration, land, wrong_fragment, urgent, result, timestamp in alerts %}
+            <li class="alert-item" onclick="displayEmailDetails('{{ protocol_type }}', '{{ service }}', '{{ flag }}', '{{ src_bytes }}', '{{ dst_bytes }}', '{{ duration }}', '{{ land }}', '{{ wrong_fragment }}', '{{ urgent }}', '{{ result }}', '{{ timestamp }}')">
+                <span id="timestamp">{{ timestamp }}</span> — <strong>Status:</strong> 
+                <span class="{{ 'anomaly' if result == 'anomaly' else 'normal' }}">{{ result }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+      <div class="main" id="main">
+        <div class="box">
+            <div class="box-header">
+                <h3>Currently Treated Alert</h3>
+                <button class="run-btn" onclick="runModel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                      <path d="M3 2.5v11l8-5.5-8-5.5z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="alert-info-grid">
+              <div class="alert-info-box">
+                  <strong>Protocol:</strong>
+                  <p id="protocol_type"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>Service:</strong>
+                  <p id="service"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>flag:</strong>
+                  <p id="flag"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>Src bytes:</strong>
+                  <p id="src_bytes"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>Dst byes:</strong>
+                  <p id="dst_bytes"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>Duration:</strong>
+                  <p id="duration"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>Land:</strong>
+                  <p id="land"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>Wrong fragment:</strong>
+                  <p id="wrong_fragment"></p>
+              </div>
+              <div class="alert-info-box">
+                  <strong>Urgent:</strong>
+                  <p id="urgent"></p>
+              </div>
+            </div>
+        </div>
+        <div class="box">
+            <h3>Result</h3>
+              <div id="scan-box" class="alert-info-box">
+                <strong>Traffic Scan Result:</strong>
+                <p id="traffic-scan-result">{{result}}</p> 
+              </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      &copy; 2025 PulseShield Dashboard | Powered by HexShield
+    </div>
+  </div>
+
+  <script>
+    
+function displayEmailDetails(protocol_type, service, flag, src_bytes, dst_bytes, duration, land, wrong_fragment, urgent, result) {
+  document.getElementById('protocol_type').textContent = protocol_type;
+  document.getElementById('service').textContent = service;
+  document.getElementById('flag').textContent = flag;
+  document.getElementById('src_bytes').textContent = src_bytes;
+  document.getElementById('dst_bytes').textContent = dst_bytes;
+  document.getElementById('duration').textContent = duration;
+  document.getElementById('land').textContent = land;
+  document.getElementById('wrong_fragment').textContent = wrong_fragment;
+  document.getElementById('urgent').textContent = urgent;
+  document.getElementById('traffic-scan-result').textContent = result;
+  styleEmailScanResult(result);
+}
+function toggleSidebar() {
+    const sidebar = document.getElementById("sidebar");
+    sidebar.classList.toggle("closed");
+  }
+  
+  function updateAlerts() {
+    alert("Fetching latest alerts from the database...");
+  }
+  // Function to update the clock every second
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const timeString = `${hours}:${minutes}:${seconds}`;
+
+      // Display the time in the #clock span
+      document.getElementById("clock").textContent = timeString;
+    }
+
+    // Update the clock every second
+    setInterval(updateClock, 1000);
+
+    // Initial clock update
+    updateClock();
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("closed");
+    }
+    function styleEmailScanResult(scanResult) {
+      const result = scanResult.trim().toLowerCase();
+      console.log(result)
+      const scanBox = document.getElementById("scan-box");
+      scanBox.classList.remove("scan-safe", "scan-phishing", "scan-unknown");
+
+      if (result === "normal") {
+        scanBox.classList.add("scan-safe");
+      } else if (result === "anomaly") {
+        scanBox.classList.add("scan-phishing");
+      } else {
+        scanBox.classList.add("scan-unknown");
+      }
+    }
+
+    function runModel() {
+    const src = document.getElementById('src_bytes').textContent.trim();
+    const dst = document.getElementById('dst_bytes').textContent.trim();
+    const duration = document.getElementById('duration').textContent.trim();
+    console.log(src, dst, duration)
+    const url = `/run_model_for_alert?src_bytes=${encodeURIComponent(src)}&dst_bytes=${encodeURIComponent(dst)}&duration=${encodeURIComponent(duration)}`;
+
+    fetch(url, { method: 'GET' })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Server error ${response.status}: ${text}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert("Prediction result: " + data.result);
+            // location.reload(); 
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("An error occurred:\n" + error.message);
+        });
+}
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wazuh Alerts Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+</head>
+<body>
+  <div class="container">
+    <div class="navbar">
+      <a href="{{ url_for('home') }}" style="text-decoration: none; color: inherit;">🔍 Pulse Shield</a>
+      <span id="clock"></span>
+    </div>
+
+    <div class="content">
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <span>Alerts</span>
+          <svg onclick="location.reload()" class="refresh-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9"/>
+            <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/>
+          </svg>
+        </div>
+
+        <div class="alert-list">
+          <ul>
+            {% for email, sender, receiver, time, status in alerts %}
+              <li class="alert-item" onclick="displayEmailDetails(`{{ email }}`, `{{ sender }}`, `{{ receiver }}`, `{{ status }}`)">
+                🕒 {{ time }} — <strong>Status:</strong>
+                <span class="{{ 'phishing' if status == 'phishing' else 'safe' }}">{{ status }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+
+      <div class="main" id="main">
+        <div class="box">
+          <div class="box-header">
+            <h3>Currently Treated Alert</h3>
+            <button class="run-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                <path d="M3 2.5v11l8-5.5-8-5.5z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="alert-info-grid">
+            <!-- Left side -->
+            <div class="alert-info-box full-width">
+              <strong>Email Text:</strong>
+              <p id="email-display">Click an alert to view the email</p>
+            </div>
+          
+            <!-- Right side -->
+            <div class="right-column">
+              <div class="alert-info-box">
+                <strong>Sender:</strong>
+                <p id="sender-display"></p>
+              </div>
+              <div class="alert-info-box">
+                <strong>Receiver:</strong>
+                <p id="receiver-display"></p>
+              </div>
+            </div>
+          </div>          
+        </div>
+
+        <div class="box">
+          <h3>Result</h3>
+          <div id="scan-box" class="alert-info-box">
+            <strong>Email Scan Result:</strong>
+            <p id="email-scan-result">{{ result }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      &copy; 2025 PulseShield Dashboard | Powered by HexShield
+    </div>
+  </div>
+
+  <script>
+    function displayEmailDetails(email, sender, receiver, result) {
+      document.getElementById('email-display').textContent = email;
+      document.getElementById('sender-display').textContent = sender;
+      document.getElementById('receiver-display').textContent = receiver;
+      document.getElementById('email-scan-result').textContent = result;
+      styleEmailScanResult(result);
+    }
+
+    function toggleSidebar() {
+      document.getElementById("sidebar").classList.toggle("closed");
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('en-GB', { hour12: false });
+      document.getElementById("clock").textContent = timeString;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function styleEmailScanResult(scanResult) {
+      const result = scanResult.trim().toLowerCase();
+      const scanBox = document.getElementById("scan-box");
+      scanBox.classList.remove("scan-safe", "scan-phishing", "scan-unknown");
+
+      if (result === "safe") {
+        scanBox.classList.add("scan-safe");
+      } else if (result === "phishing") {
+        scanBox.classList.add("scan-phishing");
+      } else {
+        scanBox.classList.add("scan-unknown");
+      }
+    }
+  </script>
+</body>
+</html>
